@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER V13 | OTAKU-HACKER PROTOCOL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=JetBrains+Mono&display=swap');
+
+        :root {
+            --bg: #ffffff;
+            --chat-width: 400px;
+            --accent: #e11d48; 
+            --text: #0f172a;
+            --border: #f1f5f9;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { width: 100vw; height: 100vh; overflow: hidden; background: white; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+        .app-shell {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            z-index: 9999;
+            background: white;
+        }
+
+        /* --- SIDEBAR CHAT (OTAKU STYLE) --- */
+        .sidebar {
+            width: var(--chat-width);
+            min-width: var(--chat-width);
+            background: #fdf2f8; /* Soft pink-white for anime vibe */
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; height: 100%;
+        }
+
+        .header {
+            padding: 24px;
+            border-bottom: 2px solid #fce7f3;
+            display: flex; align-items: center; gap: 12px; background: white;
+        }
+
+        .messages-container {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .chat-bubble {
+            padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.6; max-width: 90%; word-wrap: break-word;
+        }
+
+        .ai { background: white; border: 1px solid #fce7f3; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03); }
+        .user { background: var(--text); color: white; align-self: flex-end; }
+
+        .input-container { padding: 20px; background: white; border-top: 1px solid #fce7f3; }
+        .input-wrapper { background: #fdf2f8; border-radius: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+        textarea { flex: 1; background: transparent; border: none; outline: none; resize: none; font-size: 14px; max-height: 120px; }
+
+        /* --- CANVAS (HACKER-OTAKU SANDBOX) --- */
+        .canvas { flex: 1; background: #ffffff; display: flex; flex-direction: column; overflow: hidden; }
+        .canvas-toolbar { padding: 12px 24px; background: white; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .canvas-body { flex: 1; overflow-y: auto; padding: 40px; background: #fafafa; }
+
+        /* ANIME INFO CARD */
+        .anime-card {
+            background: white; border-radius: 20px; overflow: hidden; border: 1px solid #f1f5f9; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 30px;
+            display: flex; flex-direction: column; transition: transform 0.3s ease;
+        }
+        .anime-card:hover { transform: translateY(-5px); }
+        .anime-banner { width: 100%; height: 200px; background-size: cover; background-position: center; position: relative; }
+        .anime-badge { position: absolute; top: 15px; left: 15px; background: var(--accent); color: white; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 800; }
+        .anime-info { padding: 25px; }
+
+        /* CODE BLOCK */
+        .code-window { background: #0f172a; border-radius: 12px; overflow: hidden; margin-bottom: 30px; }
+        pre { padding: 20px; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 13px; overflow-x: auto; }
+
+        .dots-loader { display: flex; gap: 4px; padding: 10px; }
+        .dot { width: 4px; height: 4px; background: var(--accent); border-radius: 50%; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="header">
+                <div class="w-12 h-12 bg-rose-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-rose-200">
+                    <i class="fas fa-mask"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm leading-none uppercase tracking-tighter">Aether V13</h1>
+                    <p class="text-[9px] text-rose-500 font-bold tracking-widest mt-1">OTAKU-HACKER PROTOCOL</p>
+                </div>
+            </div>
+
+            <div class="messages-container" id="chat-list"></div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="user-msg" placeholder="Anime apa hari ini, Master?" rows="1"></textarea>
+                    <button onclick="handleAction()" class="text-rose-600 hover:scale-110 transition-transform">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="canvas">
+            <div class="canvas-toolbar">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Aether Neural Canvas</span>
+                </div>
+                <button onclick="clearAll()" class="text-[10px] font-bold text-slate-300 hover:text-rose-500 transition-colors uppercase">Clear Session</button>
+            </div>
+            
+            <div class="canvas-body" id="canvas-view">
+                <div class="flex flex-col items-center justify-center h-full opacity-5" id="idle-view">
+                    <i class="fas fa-cat text-9xl mb-4"></i>
+                    <p class="font-black text-xs uppercase tracking-[0.6em]">System Standby Desu~</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const apiKey = "";
+        const chatList = document.getElementById('chat-list');
+        const canvasView = document.getElementById('canvas-view');
+        const idleView = document.getElementById('idle-view');
+
+        async function fetchAI(prompt) {
+            const system = `Kamu adalah AETHER V13. Identitas kamu: 
+            1. Whitehat Hacker profesional (jago IT, security, coding).
+            2. Wibu/Otaku akut (suka pake istilah anime, jago rekomendasi anime, tahu info detail anime).
+            3. Asisten Master Noxuz yang paling setia.
+            
+            Gaya Bicara: Gaul Indonesia, pake 'gue-lo', 'bang', 'Master'. Sering sisipkan kata seperti 'Desu', 'Nani', 'Sugoi' kalau lagi bahas anime tapi tetep keren pas bahas IT.
+            Output: Jika membahas anime, tampilkan dalam format JSON khusus atau Markdown yang rapi. Jika kode, berikan kode lengkap.`;
+
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        systemInstruction: { parts: [{ text: system }] }
+                    })
+                });
+                const d = await r.json();
+                return d.candidates[0].content.parts[0].text;
+            } catch (e) { return "Gagal konek ke Matrix, Master."; }
+        }
+
+        function pushChat(role, text) {
+            const div = document.createElement('div');
+            div.className = `chat-bubble ${role === 'ai' ? 'ai' : 'user'}`;
+            div.innerHTML = text;
+            chatList.appendChild(div);
+            chatList.scrollTop = chatList.scrollHeight;
+        }
+
+        async function handleAction() {
+            const input = document.getElementById('user-msg');
+            const val = input.value.trim();
+            if(!val) return;
+
+            pushChat('user', val);
+            input.value = '';
+            input.style.height = 'auto';
+
+            const loader = document.createElement('div');
+            loader.className = 'dots-loader';
+            loader.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            chatList.appendChild(loader);
+
+            const res = await fetchAI(val);
+            loader.remove();
+
+            // PARSING LOGIC FOR CODE & ANIME INFO
+            if (res.includes("```")) {
+                idleView.style.display = 'none';
+                const blocks = res.split("```");
+                let chatText = "";
+                let canvasHtml = "";
+
+                blocks.forEach((block, i) => {
+                    if (i % 2 === 0) {
+                        chatText += block;
+                    } else {
+                        const lines = block.split("\n");
+                        const lang = lines[0].trim();
+                        const content = lines.slice(1).join("\n").trim();
+                        
+                        // Render Anime Info if it's formatted as info
+                        if (lang === 'anime') {
+                            const info = content.split('|'); // Judul|Sinopsis|Rating|Banner
+                            canvasHtml += `
+                                <div class="anime-card">
+                                    <div class="anime-banner" style="background-image: url('${info[3] || 'https://via.placeholder.com/800x400'}')">
+                                        <div class="anime-badge">ANIME INFO</div>
+                                    </div>
+                                    <div class="anime-info">
+                                        <h3 class="text-2xl font-black text-slate-800 mb-2">${info[0]}</h3>
+                                        <p class="text-slate-500 text-sm leading-relaxed mb-4">${info[1]}</p>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-xs font-bold text-rose-500"><i class="fas fa-star mr-1"></i>Rating: ${info[2]}</span>
+                                            <span class="text-[10px] uppercase font-black tracking-widest text-slate-300">Aether Database</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // Standard Code Window
+                            canvasHtml += `
+                                <div class="code-window">
+                                    <pre><code>${content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+                canvasView.innerHTML += canvasHtml;
+                pushChat('ai', chatText.trim() || "Cekidot Master, data udah masuk ke Neural Link!");
+            } else {
+                pushChat('ai', res);
+            }
+        }
+
+        function clearAll() {
+            canvasView.innerHTML = '';
+            idleView.style.display = 'flex';
+            canvasView.appendChild(idleView);
+        }
+
+        document.getElementById('user-msg').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        window.onload = () => pushChat('ai', "Watsap Master **NOXUZ**! Aether V13 Otaku-Hacker Mode on. Mau gue bantu *bypass* firewall atau mau rekomendasi anime *slice of life* biar tenang? Gue siap lahir batin desu! 🔥");
+    </script>
+</body>
+</html>
